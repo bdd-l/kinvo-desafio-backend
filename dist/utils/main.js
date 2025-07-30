@@ -15,4 +15,5 @@ app.use(express_1.default.json());
 app.use("/", routes_1.default);
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📦 Transactions API: GET/POST /transactions`);
 });

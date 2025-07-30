@@ -8,23 +8,38 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const fileOperations_1 = require("../utils/fileOperations");
+const client_1 = require("@prisma/client");
 const validateTransaction_1 = require("../utils/validateTransaction");
-const transactionUtils_1 = require("../utils/transactionUtils");
+const prisma = new client_1.PrismaClient();
 const router = (0, express_1.Router)();
-// GET all completed transactions
+// Helper function to handle Prisma errors consistently
+const handlePrismaError = (res, operation, error) => {
+    console.error(`Error ${operation} transaction:`, error);
+    return res.status(500).json({
+        error: `Failed to ${operation} transaction. Please try again later.`,
+    });
+};
+// GET all transactions
 router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const transactions = yield (0, fileOperations_1.readTransactions)();
-        res.json(transactions);
+        const transactions = yield prisma.transactionMovement.findMany();
+        return res.json(transactions);
     }
     catch (error) {
-        console.error("Error reading transactions:", error);
-        res.status(500).json({
-            error: "Failed to retrieve transactions. Please try again later.",
-        });
+        return handlePrismaError(res, "retrieve", error);
     }
 }));
 // POST a new transaction
@@ -36,55 +51,39 @@ router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 error: validationResult.error,
             });
         }
-        const transactions = yield (0, fileOperations_1.readTransactions)();
         const newTransaction = Object.assign(Object.assign({}, validationResult.data), { id: Date.now().toString() });
-        transactions.push(newTransaction);
-        yield (0, fileOperations_1.writeTransactions)(transactions);
-        res.status(201).json(newTransaction);
+        const createdTransaction = yield prisma.transactionMovement.create({
+            data: newTransaction,
+        });
+        return res.status(201).json(createdTransaction);
     }
     catch (error) {
-        console.error("Error saving transaction:", error);
-        res.status(500).json({
-            error: "Failed to save transaction. Please try again later.",
-        });
+        return handlePrismaError(res, "save", error);
     }
 }));
-/**
- * DELETE /:id
- * Deletes a transaction by its unique identifier
- *
- * Time Complexity: O(n) for small datasets, O(1) for larger ones
- * Space Complexity: O(1) for small datasets, O(n) for larger ones
- */
+// DELETE a transaction by ID
 router.delete("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
-        const transactions = yield (0, fileOperations_1.readTransactions)();
-        // Check if transaction exists
-        const result = (0, transactionUtils_1.getTransactionById)(transactions, id, res);
-        if (!result)
-            return; // Error response already sent
-        // Remove the transaction from the collection
-        transactions.splice(result.index, 1);
-        yield (0, fileOperations_1.writeTransactions)(transactions);
-        // 204 No Content - successful deletion with no response body
-        // This follows HTTP specification for successful DELETE operations
-        res.sendStatus(204);
+        // Check if transaction exists first for better error messaging
+        const existing = yield prisma.transactionMovement.findUnique({
+            where: { id },
+        });
+        if (!existing) {
+            return res.status(404).json({
+                error: `Transaction with ID "${id}" not found`,
+            });
+        }
+        yield prisma.transactionMovement.delete({
+            where: { id },
+        });
+        return res.sendStatus(204);
     }
     catch (error) {
-        console.error("Error deleting transaction:", error);
-        res.status(500).json({
-            error: "Failed to process transaction deletion. Please try again later.",
-        });
+        return handlePrismaError(res, "delete", error);
     }
 }));
-/**
- * PUT /:id
- * Updates an existing transaction with new data
- *
- * Time Complexity: O(n) for small datasets, O(1) for larger ones
- * Space Complexity: O(1) for small datasets, O(n) for larger ones
- */
+// PUT updates an existing transaction
 router.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
@@ -94,22 +93,26 @@ router.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 error: validationResult.error,
             });
         }
-        const transactions = yield (0, fileOperations_1.readTransactions)();
-        // Check if transaction exists
-        const result = (0, transactionUtils_1.getTransactionById)(transactions, id, res);
-        if (!result)
-            return; // Error response already sent
-        // Create updated transaction while preserving the original ID
-        const updatedTransaction = Object.assign(Object.assign({}, validationResult.data), { id: result.transaction.id });
-        transactions[result.index] = updatedTransaction;
-        yield (0, fileOperations_1.writeTransactions)(transactions);
-        res.status(200).json(updatedTransaction);
+        // Check if transaction exists first
+        const existing = yield prisma.transactionMovement.findUnique({
+            where: { id },
+        });
+        if (!existing) {
+            return res.status(404).json({
+                error: `Transaction with ID "${id}" not found`,
+            });
+        }
+        // CRITICAL FIX: Remove id from the validation data
+        // This prevents Prisma from trying to update the ID field
+        const _a = validationResult.data, { id: _ } = _a, updateData = __rest(_a, ["id"]);
+        const updatedTransaction = yield prisma.transactionMovement.update({
+            where: { id },
+            data: updateData,
+        });
+        return res.status(200).json(updatedTransaction);
     }
     catch (error) {
-        console.error("Error updating transaction:", error);
-        res.status(500).json({
-            error: "Failed to update transaction. Please try again later.",
-        });
+        return handlePrismaError(res, "update", error);
     }
 }));
 exports.default = router;

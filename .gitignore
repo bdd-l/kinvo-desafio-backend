@@ -1,6 +1,5 @@
 node_modules/
 docs/
-utils/txt
 
 /src/generated/prisma
 .env

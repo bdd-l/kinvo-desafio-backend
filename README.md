@@ -43,10 +43,12 @@ Este trabajo conjunto entre humano e IA resultó en una solución simple, limpia
 * [x] Configuración del entorno con Yarn
 * [x] Estructura de rutas y funciones utilitarias
 * [x] Organización escalable por capas (entities, routes, utils)
+* [x] Integración con la base de datos MariaDB mediante Prisma
 
 ### En desarrollo
 
-* [ ] Integración con la base de datos MariaDB mediante Prisma
+* [ ] Implementar paginación en el listado de transacciones
+* [ ] Implementar una cobertura mínima de pruebas automatizadas.
 
 ---
 

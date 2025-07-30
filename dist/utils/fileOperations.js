@@ -15,6 +15,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.readTransactions = readTransactions;
 exports.writeTransactions = writeTransactions;
 const promises_1 = __importDefault(require("fs/promises"));
+/**
+ * Reads transactions from the JSON file storage
+ *
+ * Handles file reading and parsing with proper error handling
+ * Specifically handles ENOENT (file not found) to return empty array
+ *
+ * Time Complexity: O(n) - Proportional to the size of the transactions file
+ * Space Complexity: O(n) - Stores all transactions in memory
+ *
+ * @returns Promise resolving to array of Transaction objects
+ * @throws Error if file exists but cannot be parsed (other than ENOENT)
+ */
 function readTransactions() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -29,6 +41,17 @@ function readTransactions() {
         }
     });
 }
+/**
+ * Writes transactions to the JSON file storage
+ *
+ * Serializes transactions with 2-space indentation for readability
+ *
+ * Time Complexity: O(n) - Proportional to the number of transactions
+ * Space Complexity: O(n) - Memory usage proportional to data size during serialization
+ *
+ * @param transactions - Array of Transaction objects to persist
+ * @returns Promise that resolves when write operation completes
+ */
 function writeTransactions(transactions) {
     return __awaiter(this, void 0, void 0, function* () {
         yield promises_1.default.writeFile("transactions.json", JSON.stringify(transactions, null, 2));
