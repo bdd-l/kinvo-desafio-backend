@@ -1,17 +1,10 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { validateTransaction } from "../utils/validateTransaction";
+import { handlePrismaError } from "../utils/handlePrismaError";
 
 const prisma = new PrismaClient();
 const router = Router();
-
-// Helper function to handle Prisma errors consistently
-const handlePrismaError = (res: any, operation: string, error: unknown) => {
-  console.error(`Error ${operation} transaction:`, error);
-  return res.status(500).json({
-    error: `Failed to ${operation} transaction. Please try again later.`,
-  });
-};
 
 // GET all transactions
 router.get("/", async (req, res) => {
