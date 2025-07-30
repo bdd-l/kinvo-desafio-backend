@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateTransaction = void 0;
-// New: Flexible date parser
 const normalizeTransactionDate = (input) => {
     // Case 1: Pure date (YYYY-MM-DD) → UTC midnight
     if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
@@ -22,49 +21,7 @@ const normalizeTransactionDate = (input) => {
     }
     return date.toISOString();
 };
-// export const validateTransaction = (data: unknown): ValidationResult => {
-//   // 1. Type guard: Ensure object with required keys
-//   if (!data || typeof data !== "object" || Array.isArray(data)) {
-//     return { success: false, error: "Invalid payload format" };
-//   }
-//   const { description, price, transactionType, transactionDate } = data as any;
-//   // 2. Field-level validation with *specific* errors
-//   if (typeof description !== "string" || description.trim() === "") {
-//     return { success: false, error: "Description must be a non-empty string" };
-//   }
-//   if (typeof price !== "number" || price <= 0) {
-//     return { success: false, error: "Price must be a positive number" };
-//   }
-//   if (
-//     typeof transactionType !== "string" ||
-//     !["income", "expense"].includes(transactionType)
-//   ) {
-//     return {
-//       success: false,
-//       error: 'Transaction type must be "income" or "expense"',
-//     };
-//   }
-//   if (!isValidISODate(transactionDate)) {
-//     return {
-//       success: false,
-//       error:
-//         'Transaction date must be a valid ISO 8601 string (e.g., "2023-10-05T14:30:00Z")',
-//     };
-//   }
-//   // 3. Return *parsed* data (critical for type safety!)
-//   return {
-//     success: true,
-//     data: {
-//       id: "", // Will be added later
-//       description: description.trim(),
-//       price,
-//       transactionType,
-//       transactionDate, // Already validated as ISO
-//     },
-//   };
-// };
 const validateTransaction = (data) => {
-    // 1. Basic type guard
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         return {
             success: false,
@@ -72,7 +29,6 @@ const validateTransaction = (data) => {
         };
     }
     const { description, price, transactionType, transactionDate } = data;
-    // 2. Field-level validation
     if (typeof description !== "string" || description.trim() === "") {
         return {
             success: false,
@@ -99,9 +55,7 @@ const validateTransaction = (data) => {
         };
     }
     try {
-        // Normalize date
         const normalizedDate = normalizeTransactionDate(transactionDate);
-        // Validate date range
         const date = new Date(normalizedDate);
         const minDate = new Date("1900-01-01");
         const maxDate = new Date("2100-01-01");

@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "id": "1753901943127",
+    "description": "compra na teemu",
+    "price": 30.55,
+    "transactionType": "expense",
+    "transactionDate": "2025-07-30T00:00:00.000Z"
+  }
+]
