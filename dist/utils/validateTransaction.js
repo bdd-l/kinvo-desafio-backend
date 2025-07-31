@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateTransaction = void 0;
+exports.validatePartialTransaction = exports.validateTransaction = void 0;
 /**
  * Normalizes various date input formats to ISO 8601 standard (UTC)
  *
@@ -51,7 +51,7 @@ const normalizeTransactionDate = (input) => {
  * Space Complexity: O(1) - Only creates a new transaction object on success
  *
  * @param data - Raw transaction data to validate
- * @returns ValidationResult object indicating success/failure and appropriate data
+ * @returns ValidationResult<Transaction> object indicating success/failure and appropriate data
  */
 const validateTransaction = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
@@ -116,3 +116,105 @@ const validateTransaction = (data) => {
     }
 };
 exports.validateTransaction = validateTransaction;
+/**
+ * Validates partial transaction data for PATCH operations
+ *
+ * Performs validation on provided fields only:
+ * - Validates each field according to the same rules as validateTransaction
+ * - Only validates fields that are present in the request
+ * - Returns only validated fields to be updated
+ *
+ * Time Complexity: O(1) - All validation steps are constant time operations
+ * Space Complexity: O(1) - Only creates a new object with the validated fields
+ *
+ * @param data - Partial transaction data to validate
+ * @returns ValidationResult<Partial<Transaction>> object indicating success/failure and appropriate data
+ */
+const validatePartialTransaction = (data) => {
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+        return {
+            success: false,
+            error: "Invalid payload format. Expected a JSON object.",
+        };
+    }
+    const { description, price, transactionType, transactionDate } = data;
+    const updateData = {};
+    let hasValidFields = false;
+    // Validate description if provided
+    if (description !== undefined) {
+        if (typeof description !== "string" || description.trim() === "") {
+            return {
+                success: false,
+                error: "Description must be a non-empty string.",
+            };
+        }
+        updateData.description = description.trim();
+        hasValidFields = true;
+    }
+    // Validate price if provided
+    if (price !== undefined) {
+        if (typeof price !== "number" || price <= 0) {
+            return {
+                success: false,
+                error: "Price must be a positive number.",
+            };
+        }
+        updateData.price = price;
+        hasValidFields = true;
+    }
+    // Validate transactionType if provided
+    if (transactionType !== undefined) {
+        if (typeof transactionType !== "string" ||
+            !["income", "expense"].includes(transactionType)) {
+            return {
+                success: false,
+                error: `Transaction type must be "income" or "expense". Received: "${transactionType}"`,
+            };
+        }
+        updateData.transactionType = transactionType;
+        hasValidFields = true;
+    }
+    // Validate transactionDate if provided
+    if (transactionDate !== undefined) {
+        if (typeof transactionDate !== "string") {
+            return {
+                success: false,
+                error: "Transaction date must be a string.",
+            };
+        }
+        try {
+            const normalizedDate = normalizeTransactionDate(transactionDate);
+            const date = new Date(normalizedDate);
+            const minDate = new Date("1900-01-01");
+            const maxDate = new Date("2100-01-01");
+            if (date < minDate || date > maxDate) {
+                return {
+                    success: false,
+                    error: "Transaction date must be between 1900 and 2100.",
+                };
+            }
+            updateData.transactionDate = normalizedDate;
+            hasValidFields = true;
+        }
+        catch (err) {
+            return {
+                success: false,
+                error: err instanceof Error
+                    ? err.message
+                    : "Invalid transaction date format.",
+            };
+        }
+    }
+    // If no valid fields were provided
+    if (!hasValidFields) {
+        return {
+            success: false,
+            error: "No valid fields provided for update.",
+        };
+    }
+    return {
+        success: true,
+        data: updateData,
+    };
+};
+exports.validatePartialTransaction = validatePartialTransaction;

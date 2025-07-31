@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
-import { validateTransaction } from "../utils/validateTransaction";
+import {
+  validateTransaction,
+  validatePartialTransaction,
+} from "../utils/validateTransaction";
 import { handlePrismaError } from "../utils/handlePrismaError";
 
 const prisma = new PrismaClient();
@@ -25,16 +28,13 @@ router.post("/", async (req, res) => {
         error: validationResult.error,
       });
     }
-
     const newTransaction = {
       ...validationResult.data,
       id: Date.now().toString(),
     };
-
     const createdTransaction = await prisma.transactionMovement.create({
       data: newTransaction,
     });
-
     return res.status(201).json(createdTransaction);
   } catch (error) {
     return handlePrismaError(res, "save", error);
@@ -45,34 +45,29 @@ router.post("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const id = req.params.id;
-
     // Check if transaction exists first for better error messaging
     const existing = await prisma.transactionMovement.findUnique({
       where: { id },
     });
-
     if (!existing) {
       return res.status(404).json({
         error: `Transaction with ID "${id}" not found`,
       });
     }
-
     await prisma.transactionMovement.delete({
       where: { id },
     });
-
     return res.sendStatus(204);
   } catch (error) {
     return handlePrismaError(res, "delete", error);
   }
 });
 
-// PUT updates an existing transaction
-router.put("/:id", async (req, res) => {
+// PATCH updates an existing transaction with partial data
+router.patch("/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const validationResult = validateTransaction(req.body);
-
+    const validationResult = validatePartialTransaction(req.body);
     if (!validationResult.success) {
       return res.status(400).json({
         error: validationResult.error,
@@ -83,17 +78,13 @@ router.put("/:id", async (req, res) => {
     const existing = await prisma.transactionMovement.findUnique({
       where: { id },
     });
-
     if (!existing) {
       return res.status(404).json({
         error: `Transaction with ID "${id}" not found`,
       });
     }
 
-    // CRITICAL FIX: Remove id from the validation data
-    // This prevents Prisma from trying to update the ID field
-    const { id: _, ...updateData } = validationResult.data;
-
+    const updateData = validationResult.data;
     const updatedTransaction = await prisma.transactionMovement.update({
       where: { id },
       data: updateData,
@@ -104,4 +95,5 @@ router.put("/:id", async (req, res) => {
     return handlePrismaError(res, "update", error);
   }
 });
+
 export default router;

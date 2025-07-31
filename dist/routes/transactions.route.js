@@ -8,30 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const client_1 = require("@prisma/client");
 const validateTransaction_1 = require("../utils/validateTransaction");
+const handlePrismaError_1 = require("../utils/handlePrismaError");
 const prisma = new client_1.PrismaClient();
 const router = (0, express_1.Router)();
-// Helper function to handle Prisma errors consistently
-const handlePrismaError = (res, operation, error) => {
-    console.error(`Error ${operation} transaction:`, error);
-    return res.status(500).json({
-        error: `Failed to ${operation} transaction. Please try again later.`,
-    });
-};
 // GET all transactions
 router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -39,7 +22,7 @@ router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.json(transactions);
     }
     catch (error) {
-        return handlePrismaError(res, "retrieve", error);
+        return (0, handlePrismaError_1.handlePrismaError)(res, "retrieve", error);
     }
 }));
 // POST a new transaction
@@ -58,7 +41,7 @@ router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.status(201).json(createdTransaction);
     }
     catch (error) {
-        return handlePrismaError(res, "save", error);
+        return (0, handlePrismaError_1.handlePrismaError)(res, "save", error);
     }
 }));
 // DELETE a transaction by ID
@@ -80,14 +63,14 @@ router.delete("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* 
         return res.sendStatus(204);
     }
     catch (error) {
-        return handlePrismaError(res, "delete", error);
+        return (0, handlePrismaError_1.handlePrismaError)(res, "delete", error);
     }
 }));
-// PUT updates an existing transaction
-router.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// PATCH updates an existing transaction with partial data
+router.patch("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
-        const validationResult = (0, validateTransaction_1.validateTransaction)(req.body);
+        const validationResult = (0, validateTransaction_1.validatePartialTransaction)(req.body);
         if (!validationResult.success) {
             return res.status(400).json({
                 error: validationResult.error,
@@ -102,9 +85,7 @@ router.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 error: `Transaction with ID "${id}" not found`,
             });
         }
-        // CRITICAL FIX: Remove id from the validation data
-        // This prevents Prisma from trying to update the ID field
-        const _a = validationResult.data, { id: _ } = _a, updateData = __rest(_a, ["id"]);
+        const updateData = validationResult.data;
         const updatedTransaction = yield prisma.transactionMovement.update({
             where: { id },
             data: updateData,
@@ -112,7 +93,7 @@ router.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         return res.status(200).json(updatedTransaction);
     }
     catch (error) {
-        return handlePrismaError(res, "update", error);
+        return (0, handlePrismaError_1.handlePrismaError)(res, "update", error);
     }
 }));
 exports.default = router;
