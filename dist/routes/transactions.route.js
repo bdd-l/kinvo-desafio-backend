@@ -30,9 +30,31 @@ const transactionService = new transactions_service_1.TransactionService();
 const transactionRateLimiter = new rateLimiter_1.RateLimiter(10, 60000, 3600000);
 exports.transactionRateLimiter = transactionRateLimiter;
 router.use(transactionRateLimiter.limit);
-// GET all transactions
+// GET all transactions with optional pagination
 router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const { page, limit } = req.query;
+        // Check if pagination parameters were provided
+        if (page !== undefined || limit !== undefined) {
+            // Parse and validate parameters
+            const pageInt = page ? parseInt(page) : 1;
+            const limitInt = limit ? parseInt(limit) : 10; // Default to 10 for pagination
+            // Validate parameters
+            if (isNaN(pageInt) || pageInt < 1) {
+                return res.status(400).json({
+                    error: "Page must be a positive integer",
+                });
+            }
+            if (isNaN(limitInt) || limitInt < 1 || limitInt > 10) {
+                return res.status(400).json({
+                    error: "Limit must be between 1 and 10",
+                });
+            }
+            // Get paginated transactions
+            const result = yield transactionService.getPaginatedTransactions(pageInt, limitInt);
+            return res.json(result);
+        }
+        // No pagination parameters provided
         const transactions = yield transactionService.getAllTransactions();
         return res.json(transactions);
     }

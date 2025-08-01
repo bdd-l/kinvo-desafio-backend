@@ -45,10 +45,10 @@ Este trabajo conjunto entre humano e IA resultó en una solución simple, limpia
 * [x] Organización escalable por capas (entities, routes, utils)
 * [x] Integración con la base de datos MariaDB mediante Prisma
 * [x] Implementación de un límite en el número excesivo de solicitudes en un corto período de tiempo
+* [x] Implementar paginación en el listado de transacciones
 
 ### En desarrollo
 
-* [ ] Implementar paginación en el listado de transacciones
 * [ ] Implementar una cobertura mínima de pruebas automatizadas.
 
 ---

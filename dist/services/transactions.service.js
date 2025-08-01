@@ -53,15 +53,62 @@ class TransactionService {
         };
     }
     /**
-     * Retrieves all transactions from the database
+     * Retrieves up to 20 transactions from the database
      *
      * @returns Promise resolving to an array of Transaction objects
      * @throws Error if database operation fails
+     *
+     * Time Complexity: O(1) - Prisma findMany with fixed limit is constant time
+     * Space Complexity: O(n) where n is the number of transactions returned (max 20)
      */
     getAllTransactions() {
         return __awaiter(this, void 0, void 0, function* () {
-            const prismaTransactions = yield this.prisma.transactionMovement.findMany();
+            const prismaTransactions = yield this.prisma.transactionMovement.findMany({
+                take: 20,
+                orderBy: {
+                    transactionDate: "desc",
+                },
+            });
             return prismaTransactions.map((transaction) => this.toTransactionInterface(transaction));
+        });
+    }
+    /**
+     * Retrieves a paginated set of transactions from the database
+     *
+     * @param page - Page number (1-based index)
+     * @param limit - Number of transactions per page (max 10)
+     * @returns Promise resolving to a paginated result
+     * @throws Error if invalid pagination parameters are provided or database operation fails
+     *
+     * Time Complexity: O(n) where n is the number of transactions returned
+     * Space Complexity: O(n) where n is the number of transactions returned
+     */
+    getPaginatedTransactions(page, limit) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Validate parameters
+            if (page < 1) {
+                throw new Error("Page must be a positive integer");
+            }
+            if (limit < 1 || limit > 10) {
+                throw new Error("Limit must be between 1 and 10");
+            }
+            const offset = (page - 1) * limit;
+            const total = yield this.prisma.transactionMovement.count();
+            const totalPages = Math.ceil(total / limit);
+            const prismaTransactions = yield this.prisma.transactionMovement.findMany({
+                skip: offset,
+                take: limit,
+                orderBy: {
+                    transactionDate: "desc",
+                },
+            });
+            const transactions = prismaTransactions.map((transaction) => this.toTransactionInterface(transaction));
+            return {
+                transactions,
+                total,
+                page,
+                totalPages,
+            };
         });
     }
     /**
