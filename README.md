@@ -28,12 +28,22 @@ Opté por usar **ExpressJS** por su amplia gama de bibliotecas compatibles y su 
 
 ## 🧠 ¿Cómo desarrollé el proyecto?
 
-Antes de escribir una sola línea de código, decidí organizar el proyecto con un **archivo de contexto** (en Markdown), donde enumeré todos los requisitos del desafío y esbocé un plan de ejecución. Este documento fue mi guía durante todo el desarrollo. Utilicé **dos inteligencias artificiales** para potenciar mi productividad y aprender más durante el proceso:
+Antes de escribir una sola línea de código, estructuré el proyecto creando un documento de contexto (en Markdown), donde detallé todos los requisitos del desafío y tracé un plan de ejecución claro. Este documento fue mi referencia estratégica a lo largo del desarrollo.
 
-* 💡 **OpenAI (ChatGPT)** fue mi apoyo estratégico. Lo utilicé para discutir enfoques, sugerir mejoras y realizar revisiones de código.
-* 🔧 **Alibaba (Qwen)** se encargó de las partes más "mecánicas" del código: generación de fragmentos repetitivos, estructura de archivos y configuraciones básicas.
+Con el objetivo de potenciar mi productividad y aprendizaje, integré dos inteligencias artificiales al flujo de trabajo:
 
-Este trabajo conjunto entre humano e IA resultó en una solución simple, limpia, bien organizada y enfocada en la mantenibilidad.
+- **🧠 ChatGPT (OpenAI)** fue mi apoyo estratégico. Lo utilicé para:
+  - Explorar diferentes enfoques de arquitectura;
+  - Evaluar decisiones técnicas clave;
+  - Recibir retroalimentación sobre fragmentos de código;
+  - Profundizar en conceptos técnicos según las necesidades del proyecto.
+
+- **⚙️ Qwen (Alibaba)** actuó como herramienta de automatización:
+  - Generación de fragmentos repetitivos de código;
+  - Estructuración inicial de carpetas y archivos;
+  - Creación de configuraciones base.
+
+Mi rol se centró en **orquestar este proceso**, combinando lo mejor de cada IA con mi propio criterio técnico. Revisé y ajusté manualmente todo el código generado, optimizando la lógica y asegurando que las decisiones de implementación estuvieran alineadas con los objetivos del proyecto.
 
 ---
 
