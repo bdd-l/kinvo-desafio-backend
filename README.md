@@ -16,7 +16,7 @@ Este repositorio contiene mi solución (incompleta) para el desafío propuesto p
 * **TypeScript**
 * **Express.js** (router elegido)
 * **Yarn** (gestor de paquetes)
-* **JSON** (almacenamiento de transacciones)
+* **Prisma ORM con MariaDB** (almacenamiento de transacciones)
 
 ---
 
