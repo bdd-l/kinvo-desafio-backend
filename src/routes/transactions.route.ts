@@ -5,19 +5,23 @@ import {
   validatePartialTransaction,
 } from "../utils/validateTransaction";
 import { handlePrismaError } from "../utils/handlePrismaError";
+import { RateLimiter } from "../middleware/rateLimiter"; // Add this import
 
 /**
- * Creates and configures the transaction routes
+ * Creates and configures the transaction routes with rate limiting
  *
- * This router handles all transaction-related HTTP requests, delegating
- * database operations to the TransactionService for better separation
- * of concerns and testability.
+ * This router handles all transaction-related HTTP requests with rate limiting
+ * to prevent abuse, while delegating database operations to the TransactionService.
  *
  * Time Complexity: O(1) for all route handlers (service methods are O(1))
  * Space Complexity: O(n) where n is the number of transactions returned
  */
 const router = Router();
 const transactionService = new TransactionService();
+
+// Add rate limiting middleware - 10 requests per minute, block for 1 hour
+const transactionRateLimiter = new RateLimiter(10, 60000, 3600000);
+router.use(transactionRateLimiter.limit);
 
 // GET all transactions
 router.get("/", async (req, res) => {
@@ -38,13 +42,11 @@ router.post("/", async (req, res) => {
         error: validationResult.error,
       });
     }
-
     // Add ID to the transaction
     const newTransaction = {
       ...validationResult.data,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
     };
-
     const createdTransaction =
       await transactionService.createTransaction(newTransaction);
     return res.status(201).json(createdTransaction);
@@ -57,7 +59,6 @@ router.post("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const id = req.params.id;
-
     // Check if transaction exists first for better error messaging
     const exists = await transactionService.transactionExists(id);
     if (!exists) {
@@ -65,7 +66,6 @@ router.delete("/:id", async (req, res) => {
         error: `Transaction with ID "${id}" not found`,
       });
     }
-
     await transactionService.deleteTransaction(id);
     return res.sendStatus(204);
   } catch (error) {
@@ -83,7 +83,6 @@ router.patch("/:id", async (req, res) => {
         error: validationResult.error,
       });
     }
-
     // Check if transaction exists first
     const exists = await transactionService.transactionExists(id);
     if (!exists) {
@@ -91,7 +90,6 @@ router.patch("/:id", async (req, res) => {
         error: `Transaction with ID "${id}" not found`,
       });
     }
-
     const updateData = validationResult.data;
     const updatedTransaction = await transactionService.updateTransaction(
       id,
@@ -103,4 +101,6 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
+// Export rate limiter for graceful shutdown if needed
+export { transactionRateLimiter };
 export default router;

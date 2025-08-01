@@ -9,22 +9,27 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.transactionRateLimiter = void 0;
 const express_1 = require("express");
 const transactions_service_1 = require("../services/transactions.service");
 const validateTransaction_1 = require("../utils/validateTransaction");
 const handlePrismaError_1 = require("../utils/handlePrismaError");
+const rateLimiter_1 = require("../middleware/rateLimiter"); // Add this import
 /**
- * Creates and configures the transaction routes
+ * Creates and configures the transaction routes with rate limiting
  *
- * This router handles all transaction-related HTTP requests, delegating
- * database operations to the TransactionService for better separation
- * of concerns and testability.
+ * This router handles all transaction-related HTTP requests with rate limiting
+ * to prevent abuse, while delegating database operations to the TransactionService.
  *
  * Time Complexity: O(1) for all route handlers (service methods are O(1))
  * Space Complexity: O(n) where n is the number of transactions returned
  */
 const router = (0, express_1.Router)();
 const transactionService = new transactions_service_1.TransactionService();
+// Add rate limiting middleware - 10 requests per minute, block for 1 hour
+const transactionRateLimiter = new rateLimiter_1.RateLimiter(10, 60000, 3600000);
+exports.transactionRateLimiter = transactionRateLimiter;
+router.use(transactionRateLimiter.limit);
 // GET all transactions
 router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -45,7 +50,7 @@ router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
         }
         // Add ID to the transaction
-        const newTransaction = Object.assign(Object.assign({}, validationResult.data), { id: Date.now().toString() });
+        const newTransaction = Object.assign(Object.assign({}, validationResult.data), { id: crypto.randomUUID() });
         const createdTransaction = yield transactionService.createTransaction(newTransaction);
         return res.status(201).json(createdTransaction);
     }

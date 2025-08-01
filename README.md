@@ -44,6 +44,7 @@ Este trabajo conjunto entre humano e IA resultó en una solución simple, limpia
 * [x] Estructura de rutas y funciones utilitarias
 * [x] Organización escalable por capas (entities, routes, utils)
 * [x] Integración con la base de datos MariaDB mediante Prisma
+* [x] Implementación de un límite en el número excesivo de solicitudes en un corto período de tiempo
 
 ### En desarrollo
 
@@ -57,7 +58,9 @@ Este trabajo conjunto entre humano e IA resultó en una solución simple, limpia
 ```
 src/
 ├── entities/
+├── middlewares/
 ├── routes/
+├── services/
 ├── utils/
 ├── main.ts
 ```
