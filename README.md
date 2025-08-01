@@ -1,5 +1,7 @@
 # 💼 Desafio Back-End - Kinvo
 
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white) ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB) ![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white) ![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white) ![Zed](https://img.shields.io/badge/zedindustries-084CCF.svg?style=for-the-badge&logo=zedindustries&logoColor=white)
+
 ![Kinvo Logo](https://github.com/cbfranca/kinvo-front-end-test/blob/master/logo.svg)
 
 ---
@@ -92,7 +94,7 @@ node dist/main.js
 ```
 
 > ⚠️ **Requisitos:** Node.js 18+, Yarn & NPM, Database Installed y Prisma ORM, Postman o Insomnia.
-
+> ⚠️ **Avisos:** Asegúrate de agregar un archivo .env y configurar la URL de conexión a la base de datos de tu elección, configura Prisma y sé feliz :)
 ---
 
 ## 🤝 Consideraciones Finales
