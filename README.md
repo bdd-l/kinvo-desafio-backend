@@ -91,7 +91,7 @@ yarn install
 node dist/main.js
 ```
 
-> ⚠️ **Requisitos:** Node.js 18+, Yarn & NPM, Postman o Insomnia.
+> ⚠️ **Requisitos:** Node.js 18+, Yarn & NPM, Database Installed y Prisma ORM, Postman o Insomnia.
 
 ---
 
