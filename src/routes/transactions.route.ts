@@ -1,18 +1,28 @@
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import { TransactionService } from "../services/transactions.service";
 import {
   validateTransaction,
   validatePartialTransaction,
 } from "../utils/validateTransaction";
 import { handlePrismaError } from "../utils/handlePrismaError";
 
-const prisma = new PrismaClient();
+/**
+ * Creates and configures the transaction routes
+ *
+ * This router handles all transaction-related HTTP requests, delegating
+ * database operations to the TransactionService for better separation
+ * of concerns and testability.
+ *
+ * Time Complexity: O(1) for all route handlers (service methods are O(1))
+ * Space Complexity: O(n) where n is the number of transactions returned
+ */
 const router = Router();
+const transactionService = new TransactionService();
 
 // GET all transactions
 router.get("/", async (req, res) => {
   try {
-    const transactions = await prisma.transactionMovement.findMany();
+    const transactions = await transactionService.getAllTransactions();
     return res.json(transactions);
   } catch (error) {
     return handlePrismaError(res, "retrieve", error);
@@ -28,13 +38,15 @@ router.post("/", async (req, res) => {
         error: validationResult.error,
       });
     }
+
+    // Add ID to the transaction
     const newTransaction = {
       ...validationResult.data,
       id: Date.now().toString(),
     };
-    const createdTransaction = await prisma.transactionMovement.create({
-      data: newTransaction,
-    });
+
+    const createdTransaction =
+      await transactionService.createTransaction(newTransaction);
     return res.status(201).json(createdTransaction);
   } catch (error) {
     return handlePrismaError(res, "save", error);
@@ -45,18 +57,16 @@ router.post("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const id = req.params.id;
+
     // Check if transaction exists first for better error messaging
-    const existing = await prisma.transactionMovement.findUnique({
-      where: { id },
-    });
-    if (!existing) {
+    const exists = await transactionService.transactionExists(id);
+    if (!exists) {
       return res.status(404).json({
         error: `Transaction with ID "${id}" not found`,
       });
     }
-    await prisma.transactionMovement.delete({
-      where: { id },
-    });
+
+    await transactionService.deleteTransaction(id);
     return res.sendStatus(204);
   } catch (error) {
     return handlePrismaError(res, "delete", error);
@@ -75,21 +85,18 @@ router.patch("/:id", async (req, res) => {
     }
 
     // Check if transaction exists first
-    const existing = await prisma.transactionMovement.findUnique({
-      where: { id },
-    });
-    if (!existing) {
+    const exists = await transactionService.transactionExists(id);
+    if (!exists) {
       return res.status(404).json({
         error: `Transaction with ID "${id}" not found`,
       });
     }
 
     const updateData = validationResult.data;
-    const updatedTransaction = await prisma.transactionMovement.update({
-      where: { id },
-      data: updateData,
-    });
-
+    const updatedTransaction = await transactionService.updateTransaction(
+      id,
+      updateData,
+    );
     return res.status(200).json(updatedTransaction);
   } catch (error) {
     return handlePrismaError(res, "update", error);

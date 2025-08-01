@@ -10,15 +10,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const client_1 = require("@prisma/client");
+const transactions_service_1 = require("../services/transactions.service");
 const validateTransaction_1 = require("../utils/validateTransaction");
 const handlePrismaError_1 = require("../utils/handlePrismaError");
-const prisma = new client_1.PrismaClient();
+/**
+ * Creates and configures the transaction routes
+ *
+ * This router handles all transaction-related HTTP requests, delegating
+ * database operations to the TransactionService for better separation
+ * of concerns and testability.
+ *
+ * Time Complexity: O(1) for all route handlers (service methods are O(1))
+ * Space Complexity: O(n) where n is the number of transactions returned
+ */
 const router = (0, express_1.Router)();
+const transactionService = new transactions_service_1.TransactionService();
 // GET all transactions
 router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const transactions = yield prisma.transactionMovement.findMany();
+        const transactions = yield transactionService.getAllTransactions();
         return res.json(transactions);
     }
     catch (error) {
@@ -34,10 +44,9 @@ router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 error: validationResult.error,
             });
         }
+        // Add ID to the transaction
         const newTransaction = Object.assign(Object.assign({}, validationResult.data), { id: Date.now().toString() });
-        const createdTransaction = yield prisma.transactionMovement.create({
-            data: newTransaction,
-        });
+        const createdTransaction = yield transactionService.createTransaction(newTransaction);
         return res.status(201).json(createdTransaction);
     }
     catch (error) {
@@ -49,17 +58,13 @@ router.delete("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const id = req.params.id;
         // Check if transaction exists first for better error messaging
-        const existing = yield prisma.transactionMovement.findUnique({
-            where: { id },
-        });
-        if (!existing) {
+        const exists = yield transactionService.transactionExists(id);
+        if (!exists) {
             return res.status(404).json({
                 error: `Transaction with ID "${id}" not found`,
             });
         }
-        yield prisma.transactionMovement.delete({
-            where: { id },
-        });
+        yield transactionService.deleteTransaction(id);
         return res.sendStatus(204);
     }
     catch (error) {
@@ -77,19 +82,14 @@ router.patch("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
         }
         // Check if transaction exists first
-        const existing = yield prisma.transactionMovement.findUnique({
-            where: { id },
-        });
-        if (!existing) {
+        const exists = yield transactionService.transactionExists(id);
+        if (!exists) {
             return res.status(404).json({
                 error: `Transaction with ID "${id}" not found`,
             });
         }
         const updateData = validationResult.data;
-        const updatedTransaction = yield prisma.transactionMovement.update({
-            where: { id },
-            data: updateData,
-        });
+        const updatedTransaction = yield transactionService.updateTransaction(id, updateData);
         return res.status(200).json(updatedTransaction);
     }
     catch (error) {
